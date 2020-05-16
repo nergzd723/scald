@@ -1,18 +1,22 @@
 #include <io.h>
+#include <biosInt.h>
 #include <tty.h>
 #include <serial.h>
+#include <string.h>
+#include <disk.h>
 #define PORT 0x3f8   /* COM1 */
-
 typedef enum {
     SERIAL,
     SCREEN,
     CRITICAL
 } stdio_channel;
+
 typedef enum{
     ZERO,
     ERR,
     WRN
 } exit_status;
+
 void init_serial() {
    outb(PORT + 1, 0x00);    // Disable all interrupts
    outb(PORT + 3, 0x80);    // Enable DLAB (set baud rate divisor)
@@ -42,9 +46,36 @@ void stdwr(stdio_channel c, char* msg){
         break;
     }
 }
+// int32 test
+void int32_test()
+{
+    int y;
+    regs16_t regs;
+     
+    // switch to 320x200x256 graphics mode
+    regs.ax = 0x0013;
+    int32(0x10, &regs);
+     
+    // full screen with blue color (1)
+    memset((char *)0xA0000, 1, (320*200));
+     
+    // draw horizontal line from 100,80 to 100,240 in multiple colors
+    for(y = 0; y < 200; y++)
+        memset((char *)0xA0000 + (y*320+80), y, 160);
+     
+    // wait for key
+    regs.ax = 0x0000;
+    int32(0x16, &regs);
+     
+    // switch to 80x25x16 text mode
+    regs.ax = 0x0003;
+    int32(0x10, &regs);
+}
 void Kernel(){
+    int32_test();
     init_serial();
     t_init();
     stdwr(CRITICAL, "LOOP WITHOUT INTERRUPTS\n");
+    char* b = ReadSector(2, 0, 1); 
     for (;;);
 }

@@ -11,7 +11,7 @@ boot:
 	mov [disk],dl
 
 	mov ah, 0x2    ;read sectors
-	mov al, 6      ;sectors to read
+	mov al, 17      ;sectors to read - 17 - one track on 1.44 3.5 drive 
 	mov ch, 0      ;cylinder idx
 	mov dh, 0      ;head idx
 	mov cl, 2      ;sector idx
@@ -59,7 +59,7 @@ times 510 - ($-$$) db 0
 dw 0xaa55
 copy_target:
 bits 32
-	hello: db "Loaded 6 sectors, now in Protected mode",0
+	hello: db "Loaded first floppy track, now in Protected mode",0
 boot2:
 	mov esi,hello
 	mov ebx,0xb8000
