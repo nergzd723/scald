@@ -25,12 +25,12 @@ int WriteSector(uint8_t track, bool head, uint8_t sector, char* data)
 {
     regs16_t regs;
     uint8_t ah = 3; // WRITE
-    uint8_t al = 18; // one sector
+    uint8_t al = 1; // one sector
     regs.ax = (ah << 8) | (al & 0xFF); // AX: AL AH
     uint8_t ch = track; // TRACK ID
     uint8_t cl = sector; // SECTOR ID
     regs.cx = (ch << 8) | (cl & 0xFF);
-    uint8_t dh = 0;
+    uint8_t dh = head;
     uint8_t dl = 0; // DISK ID: FLOPPY 1
     regs.dx = (dh << 8) | (dl & 0xFF);
     regs.bx = (unsigned short)(data); // Is it right??
