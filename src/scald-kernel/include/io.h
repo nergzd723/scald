@@ -11,10 +11,8 @@ static inline uint8_t inb(uint16_t port) {
     return ret;
 }
 
-//get cpu uptime in ticks
-static inline uint64_t rdtsc()
-{
-    uint64_t ret;
-    asm volatile ( "rdtsc" : "=A"(ret) );
-    return ret;
+static inline void io_wait(void) {
+    asm volatile ( "jmp 1f\n\t"
+                   "1:jmp 2f\n\t"
+                   "2:" );
 }

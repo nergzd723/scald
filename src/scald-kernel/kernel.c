@@ -4,6 +4,8 @@
 #include <serial.h>
 #include <string.h>
 #include <disk.h>
+#include <idt.h>
+#include <pic.h>
 #define PORT 0x3f8   /* COM1 */
 typedef enum {
     SERIAL,
@@ -72,10 +74,11 @@ void int32_test()
     int32(0x10, &regs);
 }
 void Kernel(){
-    int32_test();
     init_serial();
+    init_pic();
     t_init();
+    init_idt();
+    asm volatile ("sti");
     stdwr(CRITICAL, "LOOP WITHOUT INTERRUPTS\n");
-    char* b = ReadSector(2, 0, 1); 
     for (;;);
 }
