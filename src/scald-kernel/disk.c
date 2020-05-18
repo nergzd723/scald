@@ -1,11 +1,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <biosInt.h>
+#include <string.h>
 
 void* ReadSector(uint8_t track, bool head, uint8_t sector)
 {
     regs16_t regs;
     static char buffer[512]; // one sector buffer
+    memset(buffer, 0, sizeof(buffer)); // zero it out!
     uint8_t ah = 2; // READ
     uint8_t al = 1; // one sector
     regs.ax = (ah << 8) | (al & 0xFF); // AX: AL AH
@@ -20,6 +22,39 @@ void* ReadSector(uint8_t track, bool head, uint8_t sector)
     return buffer;
 }
 
+void* ReadTrack(uint8_t track, bool head)
+{
+    regs16_t regs;
+    static char buffer[512*18]; // 18 sector buffer
+    uint8_t ah = 2; // READ
+    uint8_t al = 18; // one sector
+    regs.ax = (ah << 8) | (al & 0xFF); // AX: AL AH
+    uint8_t ch = track; // TRACK ID
+    uint8_t cl = 0; // SECTOR ID
+    regs.cx = (ch << 8) | (cl & 0xFF);
+    uint8_t dh = head;
+    uint8_t dl = 0; // DISK ID: FLOPPY 1
+    regs.dx = (dh << 8) | (dl & 0xFF);
+    regs.bx = (unsigned short)(&buffer); // Is it right??
+    int32(0x13, &regs);
+    return buffer;
+}
+
+void ReadTrackAt(uint8_t track, bool head, void* at)
+{
+    regs16_t regs;    
+    uint8_t ah = 2; // READ
+    uint8_t al = 17; // one sector
+    regs.ax = (ah << 8) | (al & 0xFF); // AX: AL AH
+    uint8_t ch = track; // TRACK ID
+    uint8_t cl = 0; // SECTOR ID
+    regs.cx = (ch << 8) | (cl & 0xFF);
+    uint8_t dh = head;
+    uint8_t dl = 0; // DISK ID: FLOPPY 1
+    regs.dx = (dh << 8) | (dl & 0xFF);
+    regs.bx = (unsigned short)(at); // Is it right??
+    int32(0x13, &regs);
+}
 
 int WriteSector(uint8_t track, bool head, uint8_t sector, char* data)
 {

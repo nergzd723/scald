@@ -77,8 +77,12 @@ void Kernel(){
     init_serial();
     init_pic();
     t_init();
+    init_gdt();
     init_idt();
-    asm volatile ("sti");
-    stdwr(CRITICAL, "LOOP WITHOUT INTERRUPTS\n");
+    asm volatile ("int $0x5");
+    ReadSector(0,0,1);
+    asm volatile ("int $0x5");
+    stdwr(SCREEN, "LOOP WITHOUT INTERRUPTS\n");
+    stdwr(SERIAL, "IN HERE");
     for (;;);
 }
