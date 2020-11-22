@@ -77,6 +77,17 @@ void keyboard_handler() {
 
 void init_keyboard() {
     /* Set up the standard keyboard map */
+    logf("Setting up keyboard!\n");
+    outb(0x64, 0xAD);
+    outb(0x64, 0xA7);
+    inb(0x64);
+    logf("Controller turned off devices\n");
+    outb(0x64, 0xAA);
+    logf("selftest returned %x\n", inb(0x60));
+    outb(0x64, 0xAE);
+    logf("turned on PS/2 device 1\n");
+    outb(0x60, 0xFF);
+    logf("reset ps2 device 1, output %x\n", inb(0x60));
     memset(keymap, 0, sizeof(char) * KEYMAP_SIZE);
     keymap[0][0x1E] = 'a';
     keymap[0][0x30] = 'b';

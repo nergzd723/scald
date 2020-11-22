@@ -1,7 +1,7 @@
 section .boot
 bits 16
-global boot
-boot:
+global _start
+_start:
 	mov ax, 0x2401
 	int 0x15
 

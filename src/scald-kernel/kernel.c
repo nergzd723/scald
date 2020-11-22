@@ -5,8 +5,11 @@
 #include <string.h>
 #include <disk.h>
 #include <idt.h>
+#include <isr.h>
+#include <file.h>
 #include <pic.h>
 #define PORT 0x3f8   /* COM1 */
+
 typedef enum {
     SERIAL,
     SCREEN,
@@ -48,41 +51,40 @@ void stdwr(stdio_channel c, char* msg){
         break;
     }
 }
-// int32 test
-void int32_test()
-{
-    int y;
-    regs16_t regs;
-     
-    // switch to 320x200x256 graphics mode
-    regs.ax = 0x0013;
-    int32(0x10, &regs);
-     
-    // full screen with blue color (1)
-    memset((char *)0xA0000, 1, (320*200));
-     
-    // draw horizontal line from 100,80 to 100,240 in multiple colors
-    for(y = 0; y < 200; y++)
-        memset((char *)0xA0000 + (y*320+80), y, 160);
-     
-    // wait for key
-    regs.ax = 0x0000;
-    int32(0x16, &regs);
-     
-    // switch to 80x25x16 text mode
-    regs.ax = 0x0003;
-    int32(0x10, &regs);
+void handle_29(){
+    logf("SYSCALL\n");
 }
 void Kernel(){
     init_serial();
     init_pic();
     t_init();
     init_gdt();
-    init_idt();
-    asm volatile ("int $0x5");
-    ReadSector(0,0,1);
-    asm volatile ("int $0x5");
     stdwr(SCREEN, "LOOP WITHOUT INTERRUPTS\n");
-    stdwr(SERIAL, "IN HERE");
+
+    char* buffer = ReadSector(0,0,1);
+    logf("\n start sector");
+    for (int i = 0; i < 512; i++){
+        logf("%x ", buffer[i]);
+    }
+    logf("\n end sector");
+    init_idt();
+    buffer = ReadSectorB(0,0,1);
+    stdwr(SCREEN, "\n start sector");
+    stdwr(SCREEN, "\n end sector");
+    register_interrupt_handler(0x29, &handle_29);
+    memcpy((void*) 0x00100000, buffer, 512);
+    stdwr(SCREEN, "\n put payload to 0x0010000, jumping\n");
+    void (*foo)(void) = (void (*)())0x00100000;
+    foo();
+    stdwr(SCREEN, "\n returned? or not?\n");
+    init_keyboard();
+    FILE floppyb;
+    floppyb.fileno = 1;
+    buffer = read(&floppyb, 2048);
+    logf("\n start sector");
+    for (int i = 0; i < 2048; i++){
+        logf("%x ", buffer[i]);
+    }
+    logf("\n end sector");
     for (;;);
 }
