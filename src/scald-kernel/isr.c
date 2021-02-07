@@ -5,16 +5,20 @@
 isr_t interrupt_handlers[256];
 
 void isr_handler(context_t* context) {
-    logf("Received interrupt: %x\n", context->int_no);
+    logf("[INT] received interrupt: %x\n", context->int_no);
     if (interrupt_handlers[context->int_no] != 0) {
         isr_t handler = interrupt_handlers[context->int_no];
         handler(context);
+    }
+    else{
+        logf("[PANIC] unknown interrupt!\n");
+        for(;;);
     }
 }
 
 void irq_handler(context_t* context) {
     if (context->int_no - 32 != 0)
-        logf("Received IRQ: %x\n", context->int_no - 32);
+        logf("[INT] received IRQ: %x\n", context->int_no - 32);
     // Send an EOI to the PIC-> 
     // Subtract 32 from the interrupt number to get the IRQ number->
     
@@ -34,6 +38,6 @@ void irq_handler(context_t* context) {
 }
 
 void register_interrupt_handler(uint8_t n, isr_t handler) {
-    logf("Registering interrupt handler for interrupt %x\n", n);
+    logf("[INT] Registering interrupt handler for interrupt %x\n", n);
     interrupt_handlers[n] = handler;
 }

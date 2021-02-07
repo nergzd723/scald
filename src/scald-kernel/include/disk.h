@@ -1,7 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <file.h>
-void* ReadSector(uint8_t track, bool head, uint8_t sector);
+#include <stddef.h>
+void* ReadSector(uint8_t track, bool head, uint8_t sector, uint8_t floppy_id);
 void* ReadSectorB(uint8_t track, bool head, uint8_t sector);
 int WriteSector(uint8_t track, bool head, uint8_t sector, char* data);
 void* ReadTrack(uint8_t track, bool head);

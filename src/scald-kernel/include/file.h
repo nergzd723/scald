@@ -6,7 +6,7 @@
 typedef struct
 {
     uint8_t fileno;
-    uint8_t position;
-    uint8_t size; 
+    uint32_t position;
+    uint32_t size; 
 } FILE;
 #endif

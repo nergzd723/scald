@@ -1,4 +1,5 @@
 #ifndef MALLOC_H
 #define MALLOC_H
-char* malloc();
+#include <stddef.h>
+char* malloc(size_t size);
 #endif

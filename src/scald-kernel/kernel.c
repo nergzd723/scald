@@ -8,6 +8,8 @@
 #include <isr.h>
 #include <file.h>
 #include <pic.h>
+#include <malloc.h>
+
 #define PORT 0x3f8   /* COM1 */
 
 typedef enum {
@@ -52,39 +54,47 @@ void stdwr(stdio_channel c, char* msg){
     }
 }
 void handle_29(){
-    logf("SYSCALL\n");
+    logf("[SYSCALL] got a syscall\n");
 }
+
+void extend_kernel(){
+    uint32_t kernel_end = 0x7c00 + 18*512;
+
+    for (int i = 1; i<18; i++){
+        char* code = ReadSector(1, 0, i, 0);
+        memcpy((char*)kernel_end, code, 512);
+        kernel_end += 512;
+    }
+}
+
+void exec(void* address, uint32_t size){
+    logf("[EXEC] executing binary file at address %x, size %d\n", address, size);
+    void* exec_addr = (void*)0x00100000;
+    memcpy(exec_addr, address, size);
+    void (*call)() = (void (*)())exec_addr;
+    logf("[EXEC] jumping!\n");
+    call();
+}
+
 void Kernel(){
     init_serial();
+    logf("booting scald!\n");
     init_pic();
     t_init();
     init_gdt();
-    stdwr(SCREEN, "LOOP WITHOUT INTERRUPTS\n");
-
-    char* buffer = ReadSector(0,0,1);
-    logf("\n start sector");
-    for (int i = 0; i < 512; i++){
-        logf("%x ", buffer[i]);
-    }
-    logf("\n end sector");
+    char* buffer = NULL;
     init_idt();
-    buffer = ReadSectorB(0,0,1);
-    stdwr(SCREEN, "\n start sector");
-    stdwr(SCREEN, "\n end sector");
-    register_interrupt_handler(0x29, &handle_29);
-    memcpy((void*) 0x00100000, buffer, 512);
-    stdwr(SCREEN, "\n put payload to 0x0010000, jumping\n");
-    void (*foo)(void) = (void (*)())0x00100000;
-    foo();
-    stdwr(SCREEN, "\n returned? or not?\n");
-    init_keyboard();
+    extend_kernel();
     FILE floppyb;
-    floppyb.fileno = 1;
-    buffer = read(&floppyb, 2048);
-    logf("\n start sector");
-    for (int i = 0; i < 2048; i++){
-        logf("%x ", buffer[i]);
-    }
-    logf("\n end sector");
+    floppyb.fileno = FLOPPYB_FILENO;
+    buffer = read(&floppyb, 512);
+    register_interrupt_handler(0x29, &handle_29);
+    exec(buffer, 512);
+    stdwr(SCREEN, "\n returned? or not?\n");
+    char* ata = ata_pio_read(0, 1);
+    stdwr(SCREEN, "ATA1 done\n");
+    ata = ata_pio_read(1, 1);
+    stdwr(SCREEN, "ATA2 done\n");
+    check_bootsector();
     for (;;);
 }

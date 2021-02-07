@@ -18,13 +18,6 @@ _start:
 	mov dl, [disk] ;disk idx
 	mov bx, copy_target;target pointer
 	int 0x13
-	mov ah, 0x2    ;read sectors
-	mov al, 18      ;sectors to read - 17 - one track on 1.44 3.5 drive 
-	mov ch, 1      ;cylinder idx
-	mov dh, 0      ;head idx
-	mov cl, 1      ;sector idx
-	mov dl, [disk] ;disk idx
-	mov bx, copy_target;target pointer
 	cli
 	lgdt [gdt_pointer]
 	mov eax, cr0

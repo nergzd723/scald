@@ -43,6 +43,10 @@ void logf(const char* format, ...) {
             format++;
             char c = (char) va_arg(parameters, int); // char is promoted to int
             write_serial_byte(c);
+        } else if (*format == 'd') { // character
+            format++;
+            uint32_t num = va_arg(parameters, uint32_t); // char is promoted to int
+            print_serial_hex(num);
         } else if (*format == 'x') { // hex number
             format++;
             uint32_t num = va_arg(parameters, uint32_t);
