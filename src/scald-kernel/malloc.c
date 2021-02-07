@@ -10,7 +10,7 @@ uint32_t current_position = MEMORY_START;
 
 char* malloc(size_t size){
     logf("[MALLOC] allocating static memory buffer of %x bytes of size at %x\n", size, current_position);
-    memset((char*)current_position, 0x0, size);
     current_position += size;
+    memset((char*)current_position, 0x0, size);
     return (char*)current_position;
 }
