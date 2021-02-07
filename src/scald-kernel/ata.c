@@ -68,12 +68,30 @@ char* ata_pio_read_sector(uint32_t LBA){
     return buffer;
 }
 
+void ata_pio_read_sector_direct(uint32_t LBA, char* buffer){
+    uint16_t temp = 0;
+    ata_wait_busy();
+    outb(ATA_IO_BASE+ATA_HEAD_REGISTER_OFFSET, 0xE0 | (LBA >> 24) & 0xF);
+    outb(ATA_IO_BASE+ATA_SECTOR_COUNT_REGISTER_OFFSET, 1);
+    outb(ATA_IO_BASE+ATA_SECTOR_LBALO_REGISTER_OFFSET, (uint8_t)LBA); //lower
+    outb(ATA_IO_BASE+ATA_CYLINDER_LOW_REGISTER_OFFSET, (uint8_t)(LBA >> 8)); //lower(real one lmfao)
+    outb(ATA_IO_BASE+ATA_CYLINDER_HIGH_REGISTER_OFFSET, (uint8_t)(LBA >> 16)); //higher
+    outb(ATA_IO_BASE+ATA_COMMAND_REGISTER_OFFSET, 0x20); // ATA read
+    ata_wait_busy();
+    ata_wait_ready();
+    for (uint16_t j = 0; j<256; j++){
+        temp = inw(ATA_IO_BASE);
+        buffer[j*2] = temp & 0xFF;
+        buffer[j*2+1] = (temp >> 8) & 0xFF;
+    }
+
+    logf("[ATA] PIO read, LBA %x\n", LBA);
+}
+
 char* ata_pio_read(uint32_t LBA, uint32_t sector_count){
     char* buffer = malloc(sector_count* 512);
-    char* temp = NULL;
     for(int i = 0; i < sector_count; i++){
-        temp = ata_pio_read_sector(LBA+i);
-        memcpy(buffer+(512*i), temp, 512);
+        ata_pio_read_sector_direct(LBA+i, buffer+(i*512));
     }
     return buffer;
 }
