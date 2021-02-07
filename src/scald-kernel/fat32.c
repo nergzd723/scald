@@ -96,6 +96,7 @@ void process_entry(longfat_entry* entry, uint16_t sectors_per_fat){
         logf("[FAT] detected a valid long file\n");
     }
     logf("the name is %s\n", entry->entry.file_name);
+    logf("the cluster is %x\n", entry->entry.cluster_low);
     char* contents = getfile(sectors_per_fat, entry->entry.cluster_low, 0xD, entry->entry.size);
     logf("the contents of the file are: %s", contents);
 }
@@ -118,12 +119,10 @@ void check_bootsector(){
     }
     uint32_t sectors_per_fat = bootsector->bpb.sectors_per_fat;
     uint32_t root_dir_sectors = ((bootsector->bpb.directory_entries_count * 32) + (bootsector->bpb.bytes_per_sector - 1)) / bootsector->bpb.bytes_per_sector;
-    uint32_t first_data_sector = bootsector->bpb.reserved_sectors + (bootsector->bpb.fat_count * 32 /*fat32*/);
+    uint32_t first_data_sector = bootsector->bpb.reserved_sectors + (bootsector->bpb.fat_count * bootsector->bpb.sectors_per_fat) + root_dir_sectors;
     uint32_t first_sector_cluster = 0xD;
-    char* rootdir_sector_secure = ata_pio_read(first_sector_cluster, 1);
+    char* rootdir_sector = ata_pio_read(first_sector_cluster, 1);
     for (int i = 0; i<512; i+=32){
-        char* rootdir_sector = malloc(512);
-        memcpy(rootdir_sector, rootdir_sector_secure, 512);
         char* b = (char*)rootdir_sector+i;
         if (!b[0]){
             logf("[FAT] end of directory\n");
@@ -136,8 +135,7 @@ void check_bootsector(){
         if(b[11] == 0x0F){
             logf("[FAT] long file detected\n");
         }
-        longfat_entry* c = (longfat_entry*)rootdir_sector+i;
-        process_entry(c, sectors_per_fat);
+        process_entry((longfat_entry*)b, sectors_per_fat);
         i+=32;
     }
 exit:
