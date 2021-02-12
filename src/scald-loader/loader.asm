@@ -11,7 +11,7 @@ _start:
 	mov [disk],dl
 
 	mov ah, 0x2    ;read sectors
-	mov al, 17      ;sectors to read - 17 - one track on 1.44 3.5 drive 
+	mov al, 50      ;sectors to read - 17 - one track on 1.44 3.5 drive 
 	mov ch, 0      ;cylinder idx
 	mov dh, 0      ;head idx
 	mov cl, 2      ;sector idx
