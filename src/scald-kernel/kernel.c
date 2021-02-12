@@ -53,23 +53,20 @@ void stdwr(stdio_channel c, char* msg){
         break;
     }
 }
-void handle_29(){
+void handle_29(context_t* context){
     logf("[SYSCALL] got a syscall\n");
-}
-
-void extend_kernel(){
-    uint32_t kernel_end = 0x7c00 + 18*512;
-
-    for (int i = 1; i<18; i++){
-        char* code = ReadSector(1, 0, i, 0);
-        memcpy((char*)kernel_end, code, 512);
-        kernel_end += 512;
-    }
+    static uint32_t fileno;
+    fileno = context->ecx;
+    logf("ecx: %x\n", fileno);
+    if (fileno == 0x5){
+        logf("READ SERIAL");
+    } 
 }
 
 void exec(void* address, uint32_t size){
     logf("[EXEC] executing binary file at address %x, size %d\n", address, size);
     void* exec_addr = (void*)0x00100000;
+    memset(exec_addr, 0x0, size);
     memcpy(exec_addr, address, size);
     void (*call)() = (void (*)())exec_addr;
     logf("[EXEC] jumping!\n");
@@ -79,12 +76,12 @@ void exec(void* address, uint32_t size){
 void Kernel(){
     init_serial();
     logf("booting scald!\n");
+    FILE serial;
+    char* buffer = NULL;
     init_pic();
     t_init();
     init_gdt();
-    char* buffer = NULL;
     init_idt();
-    extend_kernel();
     FILE floppyb;
     floppyb.fileno = FLOPPYB_FILENO;
     buffer = read(&floppyb, 512);
@@ -96,5 +93,17 @@ void Kernel(){
     ata = ata_pio_read(1, 1);
     stdwr(SCREEN, "ATA2 done\n");
     check_bootsector();
+    listfiles();
+    char* file = readfile("SPLASH");
+    listfiles();
+    buffer = read(&floppyb, 512);
+    exec(buffer, 512);
+    stdwr(SCREEN, "ATA1 done\n");
+    stdwr(SCREEN, "ATA2 done\n");
+    for(;;){
+        char b = read_serial_byte();
+        terminal_putchar(b);
+        logf("%x", b);
+    }
     for (;;);
 }
