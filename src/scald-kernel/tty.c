@@ -66,17 +66,25 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)             
 
 void terminal_putchar(char c) 
 {
-	if (c == '\n'){
-        	terminal_row++;
+	if (c == '\n' || c == 0xD){
+        terminal_row++;
 		terminal_column = 0; 
 	}
 	else{
 		terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
+
 		if (++terminal_column == VGA_WIDTH) {
 			terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
-			terminal_row = 0;
+			terminal_row++;
 		}
+	}
+	if (terminal_row > VGA_HEIGHT || terminal_row == VGA_HEIGHT){
+    	for(int i = 0; i < VGA_HEIGHT; i++){
+        	for (int m = 0; m < VGA_WIDTH; m++){
+           		terminal_buffer[i * VGA_WIDTH + m] = terminal_buffer[(i + 1) * VGA_WIDTH + m];
+        	}
+    	}
+		terminal_row--;
 	}
 }
 
