@@ -23,3 +23,21 @@ void* memcpy(void* restrict dstptr, const void* restrict srcptr, size_t size) {
 		dst[i] = src[i];
 	return dstptr;
 }
+
+// Function to implement strcmp function
+int strcmp(const char *X, const char *Y)
+{
+    while(*X)
+    {
+        // if characters differ or end of second string is reached
+        if (*X != *Y)
+            break;
+ 
+        // move to next pair of characters
+        X++;
+        Y++;
+    }
+ 
+    // return the ASCII difference after converting char* to unsigned char*
+    return *(const unsigned char*)X - *(const unsigned char*)Y;
+}
