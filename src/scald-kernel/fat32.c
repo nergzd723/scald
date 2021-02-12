@@ -85,10 +85,40 @@ typedef struct
     fat_entry entry;
 }__attribute__((packed)) longfat_entry;
 
+typedef struct
+{
+    char file_name[11];
+    longfat_entry* entry;
+}__attribute__((packed)) fat_file_internal;
+
+fat_file_internal* file_listing[500];
+uint16_t file_count = 0;
+
 char* getfile(uint16_t sectors_per_fat, uint16_t cluster, uint16_t first_sector_cluster, uint32_t size){
     logf("[FAT32] sectors per fat: %x, first cluster: %x, cluster: %x, destination: %x\n", sectors_per_fat, first_sector_cluster, cluster, first_sector_cluster+(4*cluster)+sectors_per_fat + 0x22);
     char* buffer = ata_pio_read(first_sector_cluster+(4*cluster)+sectors_per_fat + 0x12, 1);
     return buffer;
+}
+
+char* readfile(char* file_name){
+    for (uint16_t i = 0; i < file_count; i++){
+        logf("%s\n %x\n", file_listing[i]->file_name, file_count);
+        if (file_listing[i]->file_name[0] != file_name[0]){
+            continue;
+        }
+        logf("[FAT] found a file %s\n", file_name);
+        char* contents = getfile(6, file_listing[i]->entry->entry.cluster_low, 0xD, file_listing[i]->entry->entry.size);
+        return contents;
+    }
+end:
+    logf("[FAT] file %s not found!\n", file_name);
+    return NULL;
+}
+
+void listfiles(){
+    for (uint16_t i = 0; i < file_count; i++){
+        logf("%s\n", file_listing[i]->file_name);
+    }
 }
 
 void process_entry(longfat_entry* entry, uint16_t sectors_per_fat){
@@ -99,6 +129,18 @@ void process_entry(longfat_entry* entry, uint16_t sectors_per_fat){
     logf("the cluster is %x\n", entry->entry.cluster_low);
     char* contents = getfile(sectors_per_fat, entry->entry.cluster_low, 0xD, entry->entry.size);
     logf("the contents of the file are: %s", contents);
+    fat_file_internal* newfile = malloc(sizeof(fat_file_internal));
+    newfile->entry = entry;
+    for(uint8_t i = 0; i < 11; i++){
+        if (entry->entry.file_name[i] == " "){
+            newfile->file_name[i] = '\0';
+        }
+        newfile->file_name[i] = entry->entry.file_name[i];
+    }
+    newfile->file_name[10] = '\0';
+    file_listing[file_count] = newfile;
+    file_count++;
+
 }
 
 void check_bootsector(){
@@ -128,7 +170,7 @@ void check_bootsector(){
             logf("[FAT] end of directory\n");
             break;
         }
-        if (b[0] == 0xE5){
+        if ((uint8_t)b[0] == 0xE5){
             logf("b is unused\n");
             continue;
         }
@@ -138,6 +180,4 @@ void check_bootsector(){
         process_entry((longfat_entry*)b, sectors_per_fat);
         i+=32;
     }
-exit:
-    return bootsector;
 }
