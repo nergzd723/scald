@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <file.h>
+
 extern int print_serial_hex(int);
 #define PORT 0x3f8   /* COM1 */
 
@@ -22,6 +24,25 @@ void print_serial(const char *s) {
         write_serial_byte(s[i]);
     }
 }
+
+uint8_t serial_received() {
+   return inb(PORT + 5) & 1;
+}
+ 
+char read_serial_byte() {
+   while (serial_received() == 0);
+ 
+   return inb(PORT);
+}
+char* read_serial(FILE* file, size_t size){
+    static char buffer[512];
+    memset(buffer, 0, 512);
+    for (uint16_t i = 0; i < size; i++){
+        buffer[i] = read_serial_byte();
+    }
+    return buffer;
+}
+
 
 void logf(const char* format, ...) {
     va_list parameters;
