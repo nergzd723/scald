@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdint.h>
+#include <biosInt.h>
 
 enum vga_color {                    //some VGA color enum
 	VGA_COLOR_BLACK = 0,
@@ -45,6 +46,17 @@ uint16_t* terminal_buffer;
 
 void t_init(void) 
 {
+	// disable hardware cursor (annoying)
+    regs16_t regs;
+    uint8_t ah = 1; 
+    uint8_t al = 0;
+    regs.ax = (ah << 8) | (al & 0xFF);
+    uint8_t ch = 0x3F;
+    uint8_t cl = 0;
+    regs.cx = (ch << 8) | (cl & 0xFF);
+    regs.dx = 0;
+    regs.bx = 0;
+    int32(0x10, &regs);
 	terminal_row = 0;
 	terminal_column = 0;
 	terminal_color = vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK);            //init a terminal
