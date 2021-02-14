@@ -73,6 +73,20 @@ void exec(void* address, uint32_t size){
     call();
 }
 
+void int32(unsigned char intnum, regs16_t *regs){
+    unsigned long flags;
+
+    asm volatile(
+              "pushf ; pop %0"
+              : "=rm" (flags)
+              : /* no input */
+              : "memory");
+    int32_secondary(intnum, regs);
+    if (flags & 0x200){
+        asm volatile ("sti");
+    }
+}
+
 void Kernel(){
     init_serial();
     logf("booting scald!\n");
@@ -100,6 +114,7 @@ void Kernel(){
     exec(buffer, 512);
     stdwr(SCREEN, "ATA1 done\n");
     stdwr(SCREEN, "ATA2 done\n");
+    init_pit(1280);
     for(;;){
         char b = read_serial_byte();
         terminal_putchar(b);

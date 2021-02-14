@@ -30,7 +30,7 @@
 ; 
 [bits 32]
 
-global int32, _int32
+global int32_secondary, _int32
 
 struc regs16_t
 	.di	resw 1
@@ -58,7 +58,7 @@ endstruc
 %define STACK16                            (INT32_BASE - regs16_t_size)
 
 section .text
-	int32: use32                             ; by Napalm
+	int32_secondary: use32                             ; by Napalm
 	_int32:
 		cli                                    ; disable interrupts
 		pusha                                  ; save register state to 32bit stack
