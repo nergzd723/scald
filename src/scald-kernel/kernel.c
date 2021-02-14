@@ -115,10 +115,14 @@ void Kernel(){
     stdwr(SCREEN, "ATA1 done\n");
     stdwr(SCREEN, "ATA2 done\n");
     init_pit(1280);
+    switch_video_mode();
+    fill();
+    draw_triangle(1);
     for(;;){
         char b = read_serial_byte();
         terminal_putchar(b);
         logf("%x", b);
+        logf("%x", read_ticks());
     }
     for (;;);
 }
